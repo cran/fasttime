@@ -2,12 +2,15 @@
 
 #include <Rinternals.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 #define DIGIT(X) ((X) >= '0' && (X) <= '9')
 
 /* start of each month in seconds */
 static const int cml[] = { 0, 0, 2678400, 5097600, 7776000, 10368000, 13046400, 15638400,
 			   18316800, 20995200, 23587200, 26265600, 28857600, 31536000 };
+
+typedef int64_t time_int_t;
 
 SEXP parse_ts(SEXP str, SEXP sRequiredComp) {
     SEXP res;
@@ -27,16 +30,24 @@ SEXP parse_ts(SEXP str, SEXP sRequiredComp) {
 	    while (DIGIT(*c)) { y = y * 10 + (*c - '0'); c++; }
 	    if (y < 100) y += 2000;
 	    y -= 1970;
-	    if (y >= 0) {
-		ts += ((int)((y + 1) / 4)) * 86400;
-		ts += y * 31536000;
+	    /* we only support the range of 1970-2199 to cover
+	       unsigned int POSIX time without getting into more leap year mess */
+	    if (y < 0 || y >= 230 ) {
+		tsv[i] = NA_REAL;
+		continue;
+	    } else {
+		/* adjust for all leap years prior to the current one */
+	      ts += ((time_int_t)((y + 1) / 4)) * (time_int_t) 86400;
+		if (y > 130) /* 2100 is an exception - not a leap year */
+		    ts -= 86400;
+		ts += ((time_int_t) y) * ((time_int_t) 31536000);
 		comp++;
 		while (*c && !DIGIT(*c)) c++;
 		if (*c) {
 		    while (DIGIT(*c)) { m = m * 10 + (*c - '0'); c++; }
 		    if (m > 0 && m < 13) {
 			ts += cml[m];
-			if (m > 2 && (y & 3) == 2) ts += 86400;
+			if (m > 2 && (y & 3) == 2 && y != 130 /* 2100 again */) ts += 86400;
 			comp++;
 			while (*c && !DIGIT(*c)) c++;
 			if (*c) {
