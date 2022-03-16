@@ -1,2 +1,2 @@
-useDynLib(fasttime)
-export(fastPOSIXct)
+useDynLib(fasttime, .registration = TRUE)
+export(fastPOSIXct, fastDate)

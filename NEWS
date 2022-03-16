@@ -1,5 +1,16 @@
 NEWS for fasttime package
 
+1.1-0	2022-03-16
+    o	add fixed= parameter allowing to parse timestamps
+	without separators (#4)
+
+    o	add fastDate() (#5)
+
+
+1.0-3	2018-01-05
+    o	use registered C symbol for faster look-up
+
+
 0.1-2	2016-10-26
     o	fix fastPOSIXct() example to use GMT when generating test
 	timestamp range, otherwise R may generate timestamps before
